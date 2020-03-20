@@ -27,10 +27,16 @@ Apify.main(async () => {
     const start = moment();
     const url = parseUrl(input);
     const response = await request(url);
+    const currentUrl = response.request.uri.href;
+    const originalPath = url.slice(url.lastIndexOf('/archive'), url.lenght);
+    const currentPath = currentUrl.slice(
+      currentUrl.lastIndexOf('/archive'),
+      currentUrl.lenght,
+    );
 
-    if (response.request.uri.href === url) {
-      console.log('Crawling: ' + url);
-      const { errors, data, visitedPages } = await crawl(url);
+    if (originalPath === currentPath) {
+      console.log('Searching in: ' + currentUrl);
+      const { errors, data } = await crawl(url);
       const used = process.memoryUsage().heapUsed / 1024 / 1024;
       const end = moment();
 
@@ -51,7 +57,7 @@ Apify.main(async () => {
 
       await Apify.setValue(input.keyphrase.replace(' ', '_'), output);
     } else {
-      console.log('No artciles in:' + url);
+      console.log('No artciles in: ' + url);
     }
   } catch (error) {
     console.error(error);

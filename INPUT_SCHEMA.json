@@ -6,22 +6,21 @@
     "keyphrase": {
       "title": "Keyphrase",
       "type": "string",
-      "description": "Searched tag e.g.: react, web scrapping, next js...",
+      "description": "Searched tag e.g.: react js",
       "editor": "textfield"
     },
     "year": {
       "title": "Year",
       "type": "integer",
-      "editor": "select",
-      "enum": "textfield",
-      "description": "Filter year"
+      "editor": "textfield",
+      "description": "Year of article publishment. If neither one of date fields (year, month , day) is specified, actor will scrape all articles for given tag. If any date field is specified except for year, then year field will default to current year."
     },
     "month": {
       "title": "Month",
       "type": "integer",
       "editor": "select",
       "enum": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      "description": "Month articles were published"
+      "description": "Month of article publishment. If neither one of date fields (year, month , day) is specified, actor will scrape all articles for given tag. If any date field is specified except for month, then month field will default to current month."
     },
     "day": {
       "title": "Day",
@@ -60,7 +59,7 @@
         30,
         31
       ],
-      "description": "Day articles were published"
+      "description": "Day of article publishment. If neither one of date fields (year, month , day) is specified, actor will scrape all articles for given tag. If any date field is specified except for day, then day field will default to current day. Day input automatically overflows to the next month if needed."
     }
   },
   "required": ["keyphrase"]
