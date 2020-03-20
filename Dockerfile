@@ -33,7 +33,6 @@ RUN npm --quiet set progress=false \
 # for most source file changes.
 # Note that because we are also copying the "apify_storage" directory, we
 # need to set a correct owner to make it writable, for local runs in Docker.
-COPY --chown=nguyendan . ./
 
 # Optionally, specify how to launch the source code of your actor.
 # By default, Apify's base Docker images define the CMD instruction
