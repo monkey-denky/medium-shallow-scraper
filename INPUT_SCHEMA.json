@@ -13,6 +13,8 @@
       "title": "Year",
       "type": "integer",
       "editor": "textfield",
+      "minLength": 4,
+      "maxLength": 4,
       "description": "Year of article publishment. If neither one of date fields (year, month , day) is specified, actor will scrape all articles for given tag. If any date field is specified except for year, then year field will default to current year."
     },
     "month": {
