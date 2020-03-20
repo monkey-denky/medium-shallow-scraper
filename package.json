@@ -1,9 +1,14 @@
 {
-  "name": "actor-quick-start",
+  "name": "medium-shallow-scrapper",
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "apify": "^0.20.0"
+    "apify": "^0.20.2",
+    "async-sema": "^3.1.0",
+    "bluebird": "^3.7.2",
+    "cheerio": "^1.0.0-rc.3",
+    "moment": "^2.24.0",
+    "request-promise": "^4.2.5"
   },
   "devDependencies": {
     "cross-env": "^7.0.2"
