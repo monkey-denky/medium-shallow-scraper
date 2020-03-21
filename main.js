@@ -41,13 +41,12 @@ Apify.main(async () => {
       const key = `${input.keyphrase.replace(/ /g, '-')}${
         currentPath ? currentPath.replace(/\//g, '-') : ''
       }`;
-      const dataset = await Apify.openDataset(key);
+      const dataset = await Apify.openDataset();
       let stats = await crawl(url, dataset);
       const end = moment();
       stats.input = input;
       stats.totalSeconds = end.diff(start, 'seconds');
-      const store = await Apify.openKeyValueStore(key);
-      await store.setValue('STATS', stats);
+      await Apify.setValue('STATS', stats);
       console.log('[DONE]');
     } else {
       console.log('No artciles in: ' + url);
