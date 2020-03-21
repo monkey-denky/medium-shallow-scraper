@@ -42,7 +42,7 @@ Apify.main(async () => {
       const stats = {
         totalCrawledPages: pageCount,
         totalFoundArticles: data.length,
-        totalUnfixedErrors: Object.values(errors).length,
+        totalUnfixedErrors: errors.length,
         totalSeconds: end.diff(start, 'seconds'),
       };
 

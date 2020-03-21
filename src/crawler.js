@@ -45,7 +45,7 @@ async function Crawler(url) {
           if (errors[id]) {
             errors[id].count += 1;
           } else {
-            errors[id] = { count: 1, data: node, solvable: true };
+            errors[id] = { count: 1, link: node.link, error, solvable: true };
           }
           if (errors[id].count > 2) {
             errors[id].solvable = false;
@@ -65,7 +65,13 @@ async function Crawler(url) {
       ];
     }
 
-    return { data, errors, pageCount: counter.next().value - 1 };
+    return {
+      data,
+      errors: Object.values(errors).map(error => {
+        return { link: error.link, error: error.toString() };
+      }),
+      pageCount: counter.next().value - 1,
+    };
   }
 
   /* TODO create seperate actor for scrapping article
