@@ -58,10 +58,6 @@ Apify.main(async () => {
 */
 
 Apify.main(async () => {
-  const stats = {
-    totalCrawledPages: 0,
-    totalFoundArticles: 0,
-  };
   const input = await Apify.getInput();
   console.log('Input:');
   console.dir(input);
@@ -84,14 +80,14 @@ Apify.main(async () => {
     // automatically managed based on the available system memory and CPU (see AutoscaledPool class).
     // Here we define some hard limits for the concurrency.
     minConcurrency: 5,
-    maxRequestRetries: 100,
+    maxRequestRetries: 20,
 
     // Increase the timeout for processing of each page.
     handlePageTimeoutSecs: 60,
 
     // This function is called if the page processing failed more than maxRequestRetries+1 times.
     handleFailedRequestFunction: async ({ request }) => {
-      console.log(`[ERROR failed twice] ${request.url} `);
+      console.log(`[ERROR] ${request.url} `);
     },
     handlePageFunction: async ({ request, response, body, contentType, $ }) => {
       const finalHref = response.request.gotOptions.href;
@@ -106,8 +102,7 @@ Apify.main(async () => {
       );
 
       if (requestPath === finalPath) {
-        stats.totalCrawledPages++;
-        console.log('[OK]: ' + finalHref);
+        console.log(`[OK] ${request.url} `);
         let data;
         const dates = $('.timebucket a');
         let currentIsDay = false;
@@ -155,7 +150,7 @@ Apify.main(async () => {
               if (date) {
                 obj.date = moment(date.attr('datetime'));
               }
-              stats.totalFoundArticles++;
+
               return obj;
             });
         } else {
@@ -181,7 +176,4 @@ Apify.main(async () => {
   const start = moment();
   await crawler.run();
   const end = moment();
-  stats.input = input;
-  stats.totalSeconds = end.diff(start, 'seconds');
-  await Apify.setValue('STATS', stats);
 });
