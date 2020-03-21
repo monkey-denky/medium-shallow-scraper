@@ -36,15 +36,14 @@ Apify.main(async () => {
 
     if (originalPath === currentPath) {
       console.log('Searching in: ' + currentUrl);
-      const { errors, data } = await crawl(url);
-      const used = process.memoryUsage().heapUsed / 1024 / 1024;
+      const { errors, data, pageCount } = await crawl(url);
       const end = moment();
 
       const stats = {
-        totalArticles: data.length,
+        totalCrawledPages: pageCount,
+        totalFoundArticles: data.length,
         totalUnfixedErrors: Object.values(errors).length,
         totalSeconds: end.diff(start, 'seconds'),
-        totalMegabytes: Math.round(used * 100) / 100,
       };
 
       console.dir(stats);

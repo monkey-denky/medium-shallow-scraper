@@ -65,7 +65,7 @@ async function Crawler(url) {
       ];
     }
 
-    return { data, errors };
+    return { data, errors, pageCount: counter.next().value - 1 };
   }
 
   /* TODO create seperate actor for scrapping article
