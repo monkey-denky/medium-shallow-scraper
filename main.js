@@ -38,8 +38,8 @@ Apify.main(async () => {
       console.log('Searching in: ' + currentUrl);
       // Open a named dataset
 
-      const key = `${input.keyphrase.replace(/ /g, '_')}${
-        currentPath ? currentPath.replace(/\//g, '_') : ''
+      const key = `${input.keyphrase.replace(/ /g, '-')}${
+        currentPath ? currentPath.replace(/\//g, '-') : ''
       }`;
       const dataset = await Apify.openDataset(key);
       let stats = await crawl(url, dataset);

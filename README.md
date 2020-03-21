@@ -68,7 +68,7 @@ Lets say today is March 14, 2020 then inputs below are equivalent:
 
 ### Dataset
 
-Each article is continuously stored in dataset with name keyphrase_year_month_day. A single dataset file may looks like this:
+Each article is continuously stored in dataset with name keyphrase-year-month-day. A single dataset file may looks like this:
 
 ```json
 {
@@ -86,7 +86,7 @@ Each article is continuously stored in dataset with name keyphrase_year_month_da
 
 ### Key-value store
 
-At the end of the actor run object run stats if stored in a file named keyphrase_year_month_day.json in key-value store.
+At the end of the actor run object run stats if stored in a file named keyphrase-year-month-day.json in key-value store.
 Errors attribute is and array of errors that were not solved during the actor run.
 
 ```json
