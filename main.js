@@ -47,7 +47,7 @@ Apify.main(async () => {
       stats.input = input;
       stats.totalSeconds = end.diff(start, 'seconds');
       const store = await Apify.openKeyValueStore(key);
-      store.setValue('STATS', stats);
+      await store.setValue('STATS', stats);
       console.log('[DONE]');
     } else {
       console.log('No artciles in: ' + url);
