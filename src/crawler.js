@@ -3,7 +3,6 @@ const { request } = require('./request');
 const moment = require('moment');
 const Promise = require('bluebird');
 const { parseClaps } = require('./parser');
-const { RateLimit } = require('async-sema');
 
 function* Counter() {
   let counter = 1;
@@ -12,51 +11,29 @@ function* Counter() {
   }
 }
 
-async function Crawler(url) {
+function chunk(arr, size) {
+  return Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+    arr.slice(i * size, i * size + size),
+  );
+}
+
+async function Crawler(url, dataset) {
+  let errors = {};
   async function crawl(url) {
-    let requestQueue = await getLinks(url);
-    let data = [];
-    let errors = {};
+    let requestQueue = await getLinks({ link: url });
 
-    const limit = new RateLimit(5);
     while (requestQueue.length > 0) {
-      const promises = await Promise.map(requestQueue, async node => {
-        try {
-          if (node.isLeaf) {
-            const { isLeaf, ...article } = node;
-            //console.log(`[ARTICLE ${counter.next().value}]: ${node.link}`);
-            data.push({ ...article });
-          } else {
-            await limit();
-            const links = await getLinks(node.link);
-            const id = hash(node.link);
-            if (errors[id]) {
-              console.log(`[FIXED]: ${node.link}`);
-              delete errors[id];
-            }
-
-            return links;
-          }
-        } catch (error) {
-          console.log(`[ERROR ${error}]:${node.id} / ${node.link}`);
-
-          const id = hash(node.link);
-
-          if (errors[id]) {
-            errors[id].count += 1;
-          } else {
-            errors[id] = { count: 1, link: node.link, error, solvable: true };
-          }
-          if (errors[id].count > 2) {
-            errors[id].solvable = false;
-          }
-        }
-      });
+      const chunked = chunk(requestQueue, 50);
+      let promises = [];
+      for (let index = 0; index < chunked.length; index++) {
+        const newPromises = await Promise.map(chunked[index], handleNode);
+        promises = [...promises, ...newPromises];
+      }
 
       requestQueue = [
         ...Object.values(errors)
-          .filter(node => node.solvable)
-          .map(node => node.data),
+          .filter(error => error.solvable)
+          .map(error => error.node),
         ...promises
           .filter(node => node)
           .flatMap(node => {
@@ -64,14 +41,41 @@ async function Crawler(url) {
           }),
       ];
     }
-
-    return {
-      data,
-      errors: Object.values(errors).map(error => {
-        return { link: error.link, error: error.toString() };
-      }),
-      pageCount: counter.next().value - 1,
+    const info = await dataset.getInfo();
+    const errorsArray = Object.values(errors).map(error => {
+      return { link: error.node.link, error: error.message };
+    });
+    const stats = {
+      totalCrawledPages: counter.next().value - 1,
+      totalFoundArticles: info.itemCount,
+      totalUnfixedErrors: errorsArray.length,
+      errors: errorsArray,
     };
+    return stats;
+  }
+
+  async function handleNode(node) {
+    try {
+      if (node.isLeaf) {
+        const { isLeaf, ...article } = node;
+        //console.log(`[ARTICLE ${counter.next().value}]: ${node.link}`);
+        await dataset.pushData({ ...article });
+      } else {
+        const links = await getLinks(node);
+        return links;
+      }
+    } catch (error) {
+      console.log(`[ERROR ${error}]: ${node.link}`);
+      const id = node.id;
+      if (errors[id]) {
+        errors[id].count += 1;
+      } else {
+        errors[id] = { count: 1, node, error, solvable: true };
+      }
+      if (errors[id].count > 10) {
+        errors[id].solvable = false;
+      }
+    }
   }
 
   /* TODO create seperate actor for scrapping article
@@ -92,14 +96,20 @@ async function Crawler(url) {
     return article;
   }
   */
-  async function getLinks(url) {
+  async function getLinks(node) {
+    const url = node.link;
     let requestQueue = [];
 
     const response = await request(url);
+    if (errors[node.id]) {
+      console.log(`${counter.next().value} pages) [FIXED]: ${url}`);
+      delete errors[node.id];
+    } else {
+      console.log(
+        `(${counter.next().value} pages) [OK ${response.statusCode}]: ${url}`,
+      );
+    }
 
-    console.log(
-      `(${counter.next().value} pages) [OK ${response.statusCode}]: ${url}`,
-    );
     const $ = cheerio.load(response.body);
     const dates = $('.timebucket a');
     let currentIsDay = false;

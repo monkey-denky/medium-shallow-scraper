@@ -66,53 +66,72 @@ Lets say today is March 14, 2020 then inputs below are equivalent:
 
 ## Output
 
-Output is saved to key-value store as a json file with name keyphrase_year_month_day.json.
+### Dataset
 
-### input
+Each article is continuously stored in dataset with name keyphrase_year_month_day. A single dataset file may looks like this:
 
-Input given by the user.
+```json
+{
+  "link": "https://medium.makegreatsoftware.com/chasing-a-constantly-changing-api-d7180776fd81",
+  "author": {
+    "link": "https://medium.makegreatsoftware.com/@michaelsheeley",
+    "name": "Michael Sheeley"
+  },
+  "name": "",
+  "claps": 0,
+  "responses": 0,
+  "date": "2007-11-17T00:00:00.000Z"
+}
+```
 
-### stats
+### Key-value store
 
-Information about the actor run.
-
-### errors
-
-Array of errors that were not solved during the actor run.
-
-### data
-
-Array of articles with wanted information.
-
-### Example output
+At the end of the actor run object run stats if stored in a file named keyphrase_year_month_day.json in key-value store.
+Errors attribute is and array of errors that were not solved during the actor run.
 
 ```json
 {
   "input": { "keyphrase": "next js", "day": 14, "month": 3, "year": 2020 },
-  "stats": {
-    "totalCrawledPages": 420,
-    "totalFoundArticles": 621,
-    "totalUnfixedErrors": 0,
-    "totalSeconds": 93
-  },
-  "errors": [
-    {
-      "link": "https://medium.com/the-ideal-system/graphql-and-mongodb-a-quick-example-34643e637e49",
-      "error": "404 Page not found"
-    }
-  ],
-  "data": [
-    {
-      "link": "https://medium.com/the-ideal-system/graphql-and-mongodb-a-quick-example-34643e637e49",
-      "author": {
-        "link": "https://medium.com/@nmaro",
-        "name": "Nick Redmark"
-      },
-      "name": "GraphQL and MongoDB — a quick example",
-      "claps": 3600,
-      "responses": 39,
-      "date": "2016-12-12T16:01:43.941Z"
-    }
-  ]
+  "totalCrawledPages": 1844,
+  "totalFoundArticles": 39190,
+  "totalUnfixedErrors": 0,
+  "errors": [],
+  "totalSeconds": 457
 }
 ```
+
+## Logs
+
+There are 3 main log statuses you will encounter: OK, ERROR, FIXED. All of these are followed with a link the status is meant for.
+
+### [OK 200]
+
+Request was correctly processed.
+
+### [ERROR "some message"]
+
+An error occured during processing the request and was added to request queue to retry.
+
+### [FIXED]
+
+Fixed an request that was marked as an error.
+
+## TODO
+
+### Concurrency
+
+Currently the concurrency ceiling of an actor is set to 50.
+
+I plan to add an option to customize the ceiling in the future.
+
+### Retry on error
+
+Currently if an error occures during visiting a page, actor will retry visiting the page 10 more times before marking the page as unsolvable case and adding it to errors which will appear in output file.
+
+I plan to add an option to customize number of retries before marking the page as unsolvable in the future.
+
+### Verbosity
+
+Currenttly actor logs status of every request (OK, ERROR, FIXED).
+
+I plan to add an option to customize displayed logs.

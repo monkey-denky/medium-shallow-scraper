@@ -36,30 +36,19 @@ Apify.main(async () => {
 
     if (originalPath === currentPath) {
       console.log('Searching in: ' + currentUrl);
-      const { errors, data, pageCount } = await crawl(url);
-      const end = moment();
-
-      const stats = {
-        totalCrawledPages: pageCount,
-        totalFoundArticles: data.length,
-        totalUnfixedErrors: errors.length,
-        totalSeconds: end.diff(start, 'seconds'),
-      };
-
-      console.dir(stats);
-      // Save output
-      const output = {
-        input,
-        stats,
-        errors,
-        data,
-      };
+      // Open a named dataset
 
       const key = `${input.keyphrase.replace(/ /g, '_')}${
         currentPath ? currentPath.replace(/\//g, '_') : ''
       }`;
-
-      await Apify.setValue(key, output);
+      const dataset = await Apify.openDataset(key);
+      let stats = await crawl(url, dataset);
+      const end = moment();
+      stats.input = input;
+      stats.totalSeconds = end.diff(start, 'seconds');
+      await Apify.setValue(key, stats);
+      console.dir(stats);
+      console.log('[DONE]');
     } else {
       console.log('No artciles in: ' + url);
     }
