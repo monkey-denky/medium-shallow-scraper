@@ -23,7 +23,7 @@ async function Crawler(url, dataset) {
     let requestQueue = await getLinks({ link: url });
 
     while (requestQueue.length > 0) {
-      const chunked = chunk(requestQueue, 20);
+      const chunked = chunk(requestQueue, 5);
       let promises = [];
       for (let index = 0; index < chunked.length; index++) {
         const newPromises = await Promise.map(chunked[index], handleNode);

@@ -126,7 +126,7 @@ I plan to created a scrapper to get information for a given medium article url. 
 
 ### Concurrency
 
-Currently the concurrency ceiling of an actor is set to 50.
+Currently the concurrency ceiling of an actor is set to 5.
 
 I plan to add an option to customize the ceiling in the future.
 
