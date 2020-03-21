@@ -23,7 +23,7 @@ async function Crawler(url, dataset) {
     let requestQueue = await getLinks({ link: url });
 
     while (requestQueue.length > 0) {
-      const chunked = chunk(requestQueue, 50);
+      const chunked = chunk(requestQueue, 20);
       let promises = [];
       for (let index = 0; index < chunked.length; index++) {
         const newPromises = await Promise.map(chunked[index], handleNode);
@@ -65,7 +65,11 @@ async function Crawler(url, dataset) {
         return links;
       }
     } catch (error) {
-      console.log(`[ERROR ${error}]: ${node.link}`);
+      console.log(
+        `[ERROR ${error.statusCode ? error.statusCode : 'unkwnown code'}]: ${
+          node.link
+        }`,
+      );
       const id = node.id;
       if (errors[id]) {
         errors[id].count += 1;
