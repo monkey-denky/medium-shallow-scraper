@@ -28,9 +28,9 @@ Apify.main(async () => {
     const url = parseUrl(input);
     const response = await request(url);
     const currentUrl = response.request.uri.href;
-    const originalPath = url.slice(url.lastIndexOf('/archive'), url.lenght);
+    const originalPath = url.slice(url.lastIndexOf('/archive') + 8, url.lenght);
     const currentPath = currentUrl.slice(
-      currentUrl.lastIndexOf('/archive'),
+      currentUrl.lastIndexOf('/archive') + 8,
       currentUrl.lenght,
     );
 
@@ -42,6 +42,7 @@ Apify.main(async () => {
 
       const stats = {
         totalArticles: data.length,
+        totalUnfixedErrors: Object.values(errors).length,
         totalSeconds: end.diff(start, 'seconds'),
         totalMegabytes: Math.round(used * 100) / 100,
       };
@@ -55,7 +56,11 @@ Apify.main(async () => {
         data,
       };
 
-      await Apify.setValue(input.keyphrase.replace(' ', '_'), output);
+      const key = `${input.keyphrase.replace(/ /g, '_')}${
+        currentPath ? currentPath.replace(/\//g, '_') : ''
+      }`;
+
+      await Apify.setValue(key, output);
     } else {
       console.log('No artciles in: ' + url);
     }
