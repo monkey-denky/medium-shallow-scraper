@@ -84,14 +84,13 @@ Apify.main(async () => {
     // automatically managed based on the available system memory and CPU (see AutoscaledPool class).
     // Here we define some hard limits for the concurrency.
     minConcurrency: 5,
-    maxRequestRetries: 10,
 
     // Increase the timeout for processing of each page.
     handlePageTimeoutSecs: 60,
 
     // This function is called if the page processing failed more than maxRequestRetries+1 times.
     handleFailedRequestFunction: async ({ request }) => {
-      console.log(`Request ${request.url} failed twice.`);
+      console.log(`[ERROR failed twice] ${request.url} `);
     },
     handlePageFunction: async ({ request, response, body, contentType, $ }) => {
       const finalHref = response.request.gotOptions.href;
