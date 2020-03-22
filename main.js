@@ -79,9 +79,9 @@ Apify.main(async () => {
     // The crawler downloads and processes the web pages in parallel, with a concurrency
     // automatically managed based on the available system memory and CPU (see AutoscaledPool class).
     // Here we define some hard limits for the concurrency.
-    minConcurrency: 5,
+
     maxConcurrency: 50,
-    maxRequestRetries: 100,
+    maxRequestRetries: 1000,
 
     // Increase the timeout for processing of each page.
     handlePageTimeoutSecs: 60,
