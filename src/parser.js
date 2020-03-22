@@ -32,7 +32,7 @@ function parseDate(year, month, day) {
   if (day) {
     if (day > date.daysInMonth()) {
       throw new Error(
-        `[INVALID INPUT] Given input: ${day}. ${date.format(
+        `[INVALID INPUT] Given day input is ${day}. ${date.format(
           'MMMM YYYY',
         )} has only ${date.daysInMonth()} days.`,
       );
