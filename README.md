@@ -1,4 +1,4 @@
-# Medium shallow scrapper
+# Medium shallow scraper
 
 Apify actor to scrape medium.com archive for given tag e.g. "react". Retrieves basic information for each found article (link, author, name, claps, responses, date). This actor runs on Apify.CheerioCrawler
 
