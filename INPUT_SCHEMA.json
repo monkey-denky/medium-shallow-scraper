@@ -6,31 +6,37 @@
     "keyphrase": {
       "title": "Keyphrase",
       "type": "string",
-      "description": "Searched tag e.g.: react js",
-      "editor": "textfield"
+      "description": "Valid medium.com tag",
+      "editor": "textfield",
+      "example": "react js"
     },
     "year": {
+      "sectionCaption": "Date",
+      "sectionDescription": "If neither one of date fields (year, month , day) is specified, actor will scrape all articles for given tag. If only some field are specified, the rest will default to current date value",
       "title": "Year",
       "type": "integer",
       "editor": "number",
       "minimum": 1900,
-      "description": "Year of article publishment. If neither one of date fields (year, month , day) is specified, actor will scrape all articles for given tag. If any date field is specified except for year, then year field will default to current year."
+      "example": 2020,
+      "description": "Year of article publishment"
     },
     "month": {
       "title": "Month",
       "type": "integer",
       "editor": "number",
+      "example": 12,
       "minimum": 1,
       "maximum": 12,
-      "description": "Month of article publishment. If neither one of date fields (year, month , day) is specified, actor will scrape all articles for given tag. If any date field is specified except for month, then month field will default to current month."
+      "description": "Month of article publishment"
     },
     "day": {
       "title": "Day",
       "type": "integer",
       "editor": "number",
+      "example": 31,
       "minimum": 1,
       "maximum": 31,
-      "description": "Day of article publishment. If neither one of date fields (year, month , day) is specified, actor will scrape all articles for given tag. If any date field is specified except for day, then day field will default to current day. Day input automatically overflows to the next month if needed."
+      "description": "Day of article publishment. Day input automatically overflows to the next month if needed."
     }
   },
   "required": ["keyphrase"]
