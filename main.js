@@ -8,55 +8,6 @@ const { parseUrl, parseClaps } = require('./src/parser.js');
 
 const moment = require('moment');
 
-/*
-Apify.main(async () => {
-  // Get input of the actor.
-  // If you'd like to have your input checked and generate a user interface
-  // for it, add INPUT_SCHEMA.json file to your actor.
-  // For more information, see https://apify.com/docs/actor/input-schema
-  const input = await Apify.getInput();
-  console.log('Input:');
-  console.dir(input);
-
-  if (!input || !input.keyphrase) {
-    throw new Error(
-      'Invalid input, must be a JSON object with the "keyphrase" field!',
-    );
-  }
-  try {
-    const start = moment();
-    const url = parseUrl(input);
-    const response = await request(url);
-    const currentUrl = response.request.uri.href;
-    const originalPath = url.slice(url.lastIndexOf('/archive') + 8, url.lenght);
-    const currentPath = currentUrl.slice(
-      currentUrl.lastIndexOf('/archive') + 8,
-      currentUrl.lenght,
-    );
-
-    if (originalPath === currentPath) {
-      console.log('Searching in: ' + currentUrl);
-      // Open a named dataset
-
-      const key = `${input.keyphrase.replace(/ /g, '-')}${
-        currentPath ? currentPath.replace(/\//g, '-') : ''
-      }`;
-      const dataset = await Apify.openDataset();
-      let stats = await crawl(url, dataset);
-      const end = moment();
-      stats.input = input;
-      stats.totalSeconds = end.diff(start, 'seconds');
-      await Apify.setValue('STATS', stats);
-      console.log('[DONE]');
-    } else {
-      console.log('No artciles in: ' + url);
-    }
-  } catch (error) {
-    console.error(error);
-  }
-});
-*/
-
 Apify.main(async () => {
   const input = await Apify.getInput();
   console.log('Input:');
@@ -76,17 +27,12 @@ Apify.main(async () => {
 
   const crawler = new Apify.CheerioCrawler({
     requestQueue,
-    // The crawler downloads and processes the web pages in parallel, with a concurrency
-    // automatically managed based on the available system memory and CPU (see AutoscaledPool class).
-    // Here we define some hard limits for the concurrency.
 
-    maxConcurrency: 6,
-    maxRequestRetries: 1000,
+    maxConcurrency: 10,
+    maxRequestRetries: 10000,
 
-    // Increase the timeout for processing of each page.
     handlePageTimeoutSecs: 60,
 
-    // This function is called if the page processing failed more than maxRequestRetries+1 times.
     handleFailedRequestFunction: async ({ request }) => {
       console.log(`[ERROR] ${request.url} `);
     },
@@ -174,7 +120,5 @@ Apify.main(async () => {
     },
   });
 
-  const start = moment();
   await crawler.run();
-  const end = moment();
 });
