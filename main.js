@@ -7,13 +7,15 @@ const {
   pageIsScrapable,
 } = require('./src/crawler.js');
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 Apify.main(async () => {
   const stats = {
     articles: 0,
     pages: 0,
     errors: 0,
-    fixedErrors: 0,
-    remainingErrors: 0,
   };
   const errors = {};
   const input = await Apify.getInput();
@@ -33,70 +35,54 @@ Apify.main(async () => {
 
   const crawler = new Apify.CheerioCrawler({
     requestQueue,
-
-    maxConcurrency: 50,
-
+    minConcurrency: 5,
     handlePageTimeoutSecs: 60,
-    maybeRunIntervalSecs: 1,
+    additionalMimeTypes: ['application/octet-stream'],
 
-    handleFailedRequestFunction: async ({ request, error }) => {
-      const { url } = request;
-
-      if (!errors[url]) {
-        errors[url] = { count: 0 };
-        stats.errors++;
-      }
-      errors[url].request = request;
-      errors[url].count++;
-
-      if (errors[url].count < 10) {
-        console.log(`[ERROR] ${url} `);
-        await requestQueue.addRequest({
-          uniqueKey: `error_${errors[url].count}_${url}`,
-          url,
-        });
-      } else {
-        console.log(`[FAILED] ${url} `);
-      }
+    handleFailedRequestFunction: async ({ request }) => {
+      console.log(`[ERROR ${request.id}]: ${request.url}`);
+      errors[request.url] = request;
     },
-    prepareRequestFunction: async ({ request }) => {
-      request.headers = { Accept: 'application/octet-stream' };
-    },
-    handlePageFunction: async ({ request, response, $ }) => {
+
+    handlePageFunction: async ({ request, response, autoscaledPool, $ }) => {
       let { url } = request;
       const { uniqueKey } = request;
       const responseUrl = response.request.gotOptions.href;
+      try {
+        if (archiveExists(url, responseUrl)) {
+          url = responseUrl;
+          stats.pages++;
+          const isFix = uniqueKey.startsWith('error_');
+          if (isFix) {
+            stats.fixedErrors++;
+            delete errors[url];
+          }
+          const fixTag = isFix ? 'FIX ' : '';
 
-      if (archiveExists(url, responseUrl)) {
-        url = responseUrl;
-        stats.pages++;
-        const isFix = uniqueKey.startsWith('error_');
-        if (isFix) {
-          stats.fixedErrors++;
-          delete errors[url];
-        }
-        const fixTag = isFix ? 'FIX ' : '';
+          if (pageIsScrapable(url, $)) {
+            console.log(`[${fixTag}SCRAPE ${request.id}] ${url} `);
+            const data = scrapePage($);
+            stats.articles += data.length;
+            await Apify.pushData({
+              url,
+              total: data.length,
+              data,
+            });
+          } else {
+            console.log(`${fixTag}[CRAWL ${request.id}] ${url} `);
 
-        if (pageIsScrapable(url, $)) {
-          console.log(`[${fixTag}SCRAPE] ${url} `);
-          const data = scrapePage($);
-          stats.articles += data.length;
-          await Apify.pushData({
-            url,
-            total: data.length,
-            data,
-          });
+            await Apify.utils.enqueueLinks({
+              $: $,
+              requestQueue,
+              selector: '.timebucket a',
+            });
+          }
         } else {
-          console.log(`${fixTag}[CRAWL] ${url} `);
-
-          await Apify.utils.enqueueLinks({
-            $: $,
-            requestQueue,
-            selector: '.timebucket a',
-          });
+          console.log('[DONE] No artciles in: ' + url);
         }
-      } else {
-        console.log('[DONE] No artciles in: ' + url);
+      } catch (error) {
+        autoscaledPool.desiredConcurrency--;
+        throw new Error(`[EXCEPTION ${request.id}]: ${responseUrl}`);
       }
     },
   });
@@ -104,10 +90,9 @@ Apify.main(async () => {
   const start = moment();
   await crawler.run();
   const end = moment();
-  stats.remainingErrors = Object.values(errors).length;
+  stats.errors = Object.values(errors).length;
   stats.seconds = end.diff(start, 'seconds');
   console.log(stats);
   await Apify.setValue('STATS', stats);
   await Apify.setValue('ERRORS', errors);
-  await requestQueue.drop();
 });
