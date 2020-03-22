@@ -20,7 +20,7 @@ Apify.main(async () => {
 
   const url = parseUrl(input);
   const requestQueue = await Apify.openRequestQueue();
-
+  const errors = [];
   await requestQueue.addRequest({
     url,
   });
@@ -28,13 +28,15 @@ Apify.main(async () => {
   const crawler = new Apify.CheerioCrawler({
     requestQueue,
 
-    maxConcurrency: 10,
-    maxRequestRetries: 10000,
+    maxConcurrency: 50,
 
     handlePageTimeoutSecs: 60,
 
     handleFailedRequestFunction: async ({ request }) => {
       console.log(`[ERROR] ${request.url} `);
+      await requestQueue.addRequest({
+        url: request.url,
+      });
     },
     handlePageFunction: async ({ request, response, body, contentType, $ }) => {
       const finalHref = response.request.gotOptions.href;
