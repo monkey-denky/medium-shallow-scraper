@@ -33,8 +33,12 @@ Apify.main(async () => {
     handlePageTimeoutSecs: 60,
 
     handleFailedRequestFunction: async ({ request, error }) => {
+      console.log(`[ERROR] ${request.url} `);
       errors.push(request);
       stats.totalUnfixedErrors++;
+    },
+    prepareRequestFunction: async ({ request }) => {
+      request.headers = { Accept: 'application/octet-stream' };
     },
     handlePageFunction: async ({ request, response, $ }) => {
       const finalUrl = response.request.gotOptions.href;
@@ -70,7 +74,7 @@ Apify.main(async () => {
   });
 
   await crawler.run();
-  console.log(errors);
+  console.dir(errors);
   console.log(stats);
   await Apify.setValue('STATS', stats);
   await Apify.setValue('ERRORS', errors);
