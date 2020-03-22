@@ -1,14 +1,10 @@
-// This is the main Node.js source code file of your actor.
-// It is referenced from the "scripts" section of the package.json file,
-// so that it can be started by running "npm start".
-
 const Apify = require('apify');
 
-const { parseUrl, parseClaps } = require('./src/parser.js');
-
-const moment = require('moment');
+const { parseUrl } = require('./src/parser.js');
+const { scrapePage, archiveExists } = require('./src/crawler.js');
 
 Apify.main(async () => {
+  const stats = { totalArticleCount: 0 };
   const input = await Apify.getInput();
   console.log('Input:');
   console.dir(input);
@@ -20,7 +16,6 @@ Apify.main(async () => {
 
   const url = parseUrl(input);
   const requestQueue = await Apify.openRequestQueue();
-  const errors = [];
   await requestQueue.addRequest({
     url,
   });
@@ -33,86 +28,34 @@ Apify.main(async () => {
     handlePageTimeoutSecs: 60,
 
     handleFailedRequestFunction: async ({ request }) => {
-      console.log(`[FAILED] ${request.url} `);
+      console.dir(request);
       await requestQueue.addRequest({ url: request.url });
     },
-    handlePageFunction: async ({ request, response, body, contentType, $ }) => {
-      const finalHref = response.request.gotOptions.href;
+    handlePageFunction: async ({ request, response, $ }) => {
+      const finalUrl = response.request.gotOptions.href;
 
-      const requestPath = request.url.slice(
-        request.url.lastIndexOf('/archive') + 8,
-        request.url.lenght,
-      );
-      const finalPath = finalHref.slice(
-        finalHref.lastIndexOf('/archive') + 8,
-        finalHref.lenght,
-      );
-
-      if (requestPath === finalPath) {
+      if (archiveExists(request.url, finalUrl)) {
         console.log(`${response.statusCode} ${request.url} `);
-        //console.log(`[OK] ${request.url} `);
-        let data;
-        const dates = $('.timebucket a');
-        let currentIsDay = false;
 
-        dates.each((index, element) => {
-          if ($(element).attr('href') === request.url) {
-            currentIsDay = true;
-          }
-        });
+        const dates = $('.timebucket a');
+        const currentIsDay = dates
+          .get()
+          .find(element => $(element).attr('href') === request.url);
 
         //Is leaf?
         if (!dates.text() || currentIsDay) {
-          data = $('.streamItem')
-            .get()
-            .map(listItem => {
-              const link = $(listItem).find(`a[data-action="open-post"]`);
-              const responses = $(listItem).find(`a[href*="#--responses"]`);
-              const author = $(listItem).find('a[data-user-id]');
-              const name = $(listItem).find('h3');
-              const claps = $(listItem).find(
-                `button[data-action="show-recommends"]`,
-              );
-              const date = $(listItem).find(`time`);
-
-              const obj = {};
-
-              if (link) obj.link = link.attr('href').split('?')[0];
-
-              if (author)
-                obj.author = {
-                  link: author.attr('href').split('?')[0],
-                  name: author.text().trim(),
-                };
-              if (name) obj.name = name.text().trim();
-              if (claps)
-                obj.claps = parseInt(parseClaps(claps.text().trim())) || 0;
-              if (responses)
-                obj.responses =
-                  parseInt(
-                    responses
-                      .text()
-                      .trim()
-                      .split(' ')[0],
-                  ) || 0;
-              if (date) {
-                obj.date = moment(date.attr('datetime'));
-              }
-
-              return obj;
-            });
+          const data = scrapePage($);
+          stats.totalArticleCount += data.length;
+          await Apify.pushData({
+            url: finalHref,
+            total: data.length,
+            data,
+          });
         } else {
           await Apify.utils.enqueueLinks({
             $: $,
             requestQueue,
             selector: '.timebucket a',
-          });
-        }
-        // Save the data to dataset.
-        if (data) {
-          await Apify.pushData({
-            url: finalHref,
-            data,
           });
         }
       } else {
@@ -122,4 +65,6 @@ Apify.main(async () => {
   });
 
   await crawler.run();
+  console.log(stats);
+  await Apify.setValue('STATS', stats);
 });
