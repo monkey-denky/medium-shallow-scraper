@@ -8,8 +8,8 @@ Apify.main(async () => {
     totalArticleCount: 0,
     totalPageCount: 0,
     totalUnfixedErrors: 0,
-    errors: [],
   };
+  const errors = [];
   const input = await Apify.getInput();
   console.log('Input:');
   console.dir(input);
@@ -33,15 +33,13 @@ Apify.main(async () => {
     handlePageTimeoutSecs: 60,
 
     handleFailedRequestFunction: async ({ request, error }) => {
-      stats.errors.push(request);
+      errors.push(request);
       stats.totalUnfixedErrors++;
     },
     handlePageFunction: async ({ request, response, $ }) => {
       const finalUrl = response.request.gotOptions.href;
       stats.totalPageCount++;
       if (archiveExists(request.url, finalUrl)) {
-        console.log(`${response.statusCode} ${request.url} `);
-
         const dates = $('.timebucket a');
         const currentIsDay = dates
           .get()
@@ -49,6 +47,7 @@ Apify.main(async () => {
 
         //Is leaf?
         if (!dates.text() || currentIsDay) {
+          console.log(`[SCRAPE] ${request.url} `);
           const data = scrapePage($);
           stats.totalArticleCount += data.length;
           await Apify.pushData({
@@ -57,6 +56,7 @@ Apify.main(async () => {
             data,
           });
         } else {
+          console.log(`[CRAWL] ${request.url} `);
           await Apify.utils.enqueueLinks({
             $: $,
             requestQueue,
@@ -70,6 +70,8 @@ Apify.main(async () => {
   });
 
   await crawler.run();
+  console.log(errors);
   console.log(stats);
   await Apify.setValue('STATS', stats);
+  await Apify.setValue('ERRORS', errors);
 });
