@@ -80,7 +80,7 @@ Apify.main(async () => {
     // automatically managed based on the available system memory and CPU (see AutoscaledPool class).
     // Here we define some hard limits for the concurrency.
 
-    maxConcurrency: 50,
+    maxConcurrency: 10,
     maxRequestRetries: 1000,
 
     // Increase the timeout for processing of each page.
