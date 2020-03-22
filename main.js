@@ -33,10 +33,8 @@ Apify.main(async () => {
     handlePageTimeoutSecs: 60,
 
     handleFailedRequestFunction: async ({ request }) => {
-      console.log(`[ERROR] ${request.url} `);
-      await requestQueue.addRequest({
-        url: request.url,
-      });
+      console.log(`[FAILED] ${request.url} `);
+      await requestQueue.addRequest({ url: request.url });
     },
     handlePageFunction: async ({ request, response, body, contentType, $ }) => {
       const finalHref = response.request.gotOptions.href;
@@ -51,7 +49,8 @@ Apify.main(async () => {
       );
 
       if (requestPath === finalPath) {
-        console.log(`[OK] ${request.url} `);
+        console.log(`${response.statusCode} ${request.url} `);
+        //console.log(`[OK] ${request.url} `);
         let data;
         const dates = $('.timebucket a');
         let currentIsDay = false;
@@ -117,7 +116,7 @@ Apify.main(async () => {
           });
         }
       } else {
-        console.log('No artciles in: ' + finalHref);
+        console.log('[DONE] No artciles in: ' + request.url);
       }
     },
   });
