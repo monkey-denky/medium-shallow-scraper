@@ -52,15 +52,11 @@ Apify.main(async () => {
         if (archiveExists(url, responseUrl)) {
           url = responseUrl;
           stats.pages++;
-          const isFix = uniqueKey.startsWith('error_');
-          if (isFix) {
-            stats.fixedErrors++;
-            delete errors[url];
-          }
+          const isFix = request.retryCount > 0;
           const fixTag = isFix ? 'FIX ' : '';
 
           if (pageIsScrapable(url, $)) {
-            console.log(`[${fixTag}SCRAPE ${request.id}] ${url} `);
+            console.log(`[${fixTag}SCRAPE] ${url}`);
             const data = scrapePage($);
             stats.articles += data.length;
             await Apify.pushData({
@@ -69,7 +65,7 @@ Apify.main(async () => {
               data,
             });
           } else {
-            console.log(`${fixTag}[CRAWL ${request.id}] ${url} `);
+            console.log(`[${fixTag}CRAWL] ${url}`);
 
             await Apify.utils.enqueueLinks({
               $: $,
@@ -82,7 +78,7 @@ Apify.main(async () => {
         }
       } catch (error) {
         autoscaledPool.desiredConcurrency--;
-        throw new Error(`[EXCEPTION ${request.id}]: ${responseUrl}`);
+        throw new Error(`[ERROR: ${url}`);
       }
     },
   });

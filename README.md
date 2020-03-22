@@ -1,8 +1,12 @@
 # Medium shallow scrapper
 
-Apify actor to scrape medium.com archive for given tag e.g. "react". Retrieves basic information for each found article (link, author, name, claps, responses, date).
+Apify actor to scrape medium.com archive for given tag e.g. "react". Retrieves basic information for each found article (link, author, name, claps, responses, date). This actor runs on Apify.CheerioCrawler
 
-IMPORTANT: This scrapper does not retrieve detailed information (e.g. tags, content) which is located on the article page itself. I will create and actor (medium-deep-scrapper) for scrapping information from particular medium article with a given url in the future. The reason for this is to separate usecases that only requires basic article information (e.g. number of articles author wrote on given topic) from those that require deep dive in the article (e.g. all tags of an article). This way the shallow scrapper can operate quickly by not visiting pages of every article.
+## !IMPORTANT!
+
+This scrapper does not retrieve detailed information (e.g. tags, content) which is located on the article page itself. I will create an actor (medium-deep-scrapper) for scrapping information from particular medium article with a given url in the future.
+
+The reason for this is to separate usecases that only requires basic article information (e.g. number of articles author wrote on given topic) from those, that require deep dive in the article (e.g. all tags of an article). This way the shallow scrapper can operate quickly by not visiting pages of every article.
 
 ## Input
 
@@ -70,53 +74,84 @@ Lets say today is March 14, 2020 then inputs below are equivalent:
 
 ### Dataset
 
-Each article is continuously stored in dataset with name keyphrase-year-month-day. A single dataset file may looks like this:
+Array of objects containing:
+
+- url: page from which articles were obtained
+- total: number of articles
+- data: array of articles.
 
 ```json
-{
-  "link": "https://medium.makegreatsoftware.com/chasing-a-constantly-changing-api-d7180776fd81",
-  "author": {
-    "link": "https://medium.makegreatsoftware.com/@michaelsheeley",
-    "name": "Michael Sheeley"
-  },
-  "name": "",
-  "claps": 0,
-  "responses": 0,
-  "date": "2007-11-17T00:00:00.000Z"
-}
+[
+  {
+    "url": "https://medium.com/tag/nextjs/archive/2016",
+    "total": 1,
+    "data": [
+      {
+        "link": "https://medium.com/the-ideal-system/graphql-and-mongodb-a-quick-example-34643e637e49",
+        "author": {
+          "link": "https://medium.com/@nmaro",
+          "name": "Nick Redmark"
+        },
+        "name": "GraphQL and MongoDB — a quick example",
+        "claps": 3600,
+        "responses": 39,
+        "date": "2016-12-12T16:01:43.941Z"
+      }
+    ]
+  }
+]
 ```
 
 ### Key-value store
 
-At the end of the actor run object run stats if stored in a file named keyphrase-year-month-day.json in key-value store.
-Errors attribute is and array of errors that were not solved during the actor run.
+Actor creates STATS.json and ERROR.json files.
+
+#### ERRORS.json
+
+Object where keys are urls where error occured and value is matching request object.
 
 ```json
 {
-  "input": { "keyphrase": "next js", "day": 14, "month": 3, "year": 2020 },
-  "totalCrawledPages": 1844,
-  "totalFoundArticles": 39190,
-  "totalUnfixedErrors": 0,
-  "errors": [],
-  "totalSeconds": 457
+  "https://medium.com/tag/react/archive/2018/01/27 ": {
+    "errorMessage": "An errror occured"
+  },
+  "https://medium.com/tag/react/archive/2018/01/28 ": {
+    "errorMessage": "Too many requests"
+  }
 }
+```
+
+#### STATS.json
+
+Object containing actor run statistics.
+
+```json
+{ "articles": 622, "pages": 428, "errors": 0, "seconds": 50 }
 ```
 
 ## Logs
 
-There are 3 main log statuses you will encounter: OK, ERROR, FIXED. All of these are followed with a link the status is meant for.
+All of the following status tags are followed with a link the status is meant for.
 
-### [OK 200]
+### [CRAWL]
 
-Request was correctly processed.
+Retrieving links to visit
 
-### [ERROR "some message"]
+### [SCRAPE]
+
+Retrieving articles information
+
+### [ERROR]
 
 An error occured during processing the request and was added to request queue to retry.
 
-### [FIXED]
+### [FAILURE]
 
-Fixed an request that was marked as an error.
+An error occured more than twice on the same url and will not be added to request queue to retry.
+
+### [FIX CRAWL/SCRAPE]
+
+Request that an error occured on was processed correctly.
 
 ## TODO
 
@@ -124,20 +159,8 @@ Fixed an request that was marked as an error.
 
 I plan to created a scrapper to get information for a given medium article url. This is to get more detailed information about article such as tags or the content itself.
 
-### Concurrency
-
-Currently the concurrency ceiling of an actor is set to 5.
-
-I plan to add an option to customize the ceiling in the future.
-
-### Retry on error
-
-Currently if an error occures during visiting a page, actor will retry visiting the page 10 more times before marking the page as unsolvable case and adding it to errors which will appear in output file.
-
-I plan to add an option to customize number of retries before marking the page as unsolvable in the future.
-
 ### Verbosity
 
-Currenttly actor logs status of every request (OK, ERROR, FIXED).
+Currenttly actor logs status.
 
 I plan to add an option to customize displayed logs.
