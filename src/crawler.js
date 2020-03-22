@@ -2,6 +2,16 @@ const moment = require('moment');
 
 const { parseClaps } = require('./parser');
 
+function pageIsScrapable(url, $) {
+  const dates = $('.timebucket a');
+
+  const currentIsDay = dates
+    .get()
+    .find(element => $(element).attr('href') === url);
+
+  return !dates.text() || currentIsDay;
+}
+
 function archiveExists(originalUrl, finalUrl) {
   const originalDate = originalUrl.slice(
     originalUrl.lastIndexOf('/archive') + 8,
@@ -47,3 +57,4 @@ function scrapePage($) {
 
 exports.archiveExists = archiveExists;
 exports.scrapePage = scrapePage;
+exports.pageIsScrapable = pageIsScrapable;

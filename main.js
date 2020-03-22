@@ -1,15 +1,21 @@
 const Apify = require('apify');
-
+const moment = require('moment');
 const { parseUrl } = require('./src/parser.js');
-const { scrapePage, archiveExists } = require('./src/crawler.js');
+const {
+  scrapePage,
+  archiveExists,
+  pageIsScrapable,
+} = require('./src/crawler.js');
 
 Apify.main(async () => {
   const stats = {
-    totalArticleCount: 0,
-    totalPageCount: 0,
-    totalUnfixedErrors: 0,
+    articles: 0,
+    pages: 0,
+    errors: 0,
+    fixedErrors: 0,
+    remainingErrors: 0,
   };
-  const errors = [];
+  const errors = {};
   const input = await Apify.getInput();
   console.log('Input:');
   console.dir(input);
@@ -19,10 +25,10 @@ Apify.main(async () => {
     );
   }
 
-  const url = parseUrl(input);
+  const startUrl = parseUrl(input);
   const requestQueue = await Apify.openRequestQueue();
   await requestQueue.addRequest({
-    url,
+    url: startUrl,
   });
 
   const crawler = new Apify.CheerioCrawler({
@@ -31,36 +37,58 @@ Apify.main(async () => {
     maxConcurrency: 50,
 
     handlePageTimeoutSecs: 60,
+    maybeRunIntervalSecs: 1,
 
     handleFailedRequestFunction: async ({ request, error }) => {
-      console.log(`[ERROR] ${request.url} `);
-      errors.push(request);
-      stats.totalUnfixedErrors++;
+      const { url } = request;
+
+      if (!errors[url]) {
+        errors[url] = { count: 0 };
+        stats.errors++;
+      }
+      errors[url].request = request;
+      errors[url].count++;
+
+      if (errors[url].count < 10) {
+        console.log(`[ERROR] ${url} `);
+        await requestQueue.addRequest({
+          uniqueKey: `error_${errors[url].count}_${url}`,
+          url,
+        });
+      } else {
+        console.log(`[FAILED] ${url} `);
+      }
     },
     prepareRequestFunction: async ({ request }) => {
       request.headers = { Accept: 'application/octet-stream' };
     },
     handlePageFunction: async ({ request, response, $ }) => {
-      const finalUrl = response.request.gotOptions.href;
-      stats.totalPageCount++;
-      if (archiveExists(request.url, finalUrl)) {
-        const dates = $('.timebucket a');
-        const currentIsDay = dates
-          .get()
-          .find(element => $(element).attr('href') === request.url);
+      let { url } = request;
+      const { uniqueKey } = request;
+      const responseUrl = response.request.gotOptions.href;
 
-        //Is leaf?
-        if (!dates.text() || currentIsDay) {
-          console.log(`[SCRAPE] ${request.url} `);
+      if (archiveExists(url, responseUrl)) {
+        url = responseUrl;
+        stats.pages++;
+        const isFix = uniqueKey.startsWith('error_');
+        if (isFix) {
+          stats.fixedErrors++;
+          delete errors[url];
+        }
+        const fixTag = isFix ? 'FIX ' : '';
+
+        if (pageIsScrapable(url, $)) {
+          console.log(`[${fixTag}SCRAPE] ${url} `);
           const data = scrapePage($);
-          stats.totalArticleCount += data.length;
+          stats.articles += data.length;
           await Apify.pushData({
-            url: finalUrl,
+            url,
             total: data.length,
             data,
           });
         } else {
-          console.log(`[CRAWL] ${request.url} `);
+          console.log(`${fixTag}[CRAWL] ${url} `);
+
           await Apify.utils.enqueueLinks({
             $: $,
             requestQueue,
@@ -68,14 +96,18 @@ Apify.main(async () => {
           });
         }
       } else {
-        console.log('[DONE] No artciles in: ' + request.url);
+        console.log('[DONE] No artciles in: ' + url);
       }
     },
   });
 
+  const start = moment();
   await crawler.run();
-  console.dir(errors);
+  const end = moment();
+  stats.remainingErrors = Object.values(errors).length;
+  stats.seconds = end.diff(start, 'seconds');
   console.log(stats);
   await Apify.setValue('STATS', stats);
   await Apify.setValue('ERRORS', errors);
+  await requestQueue.drop();
 });
