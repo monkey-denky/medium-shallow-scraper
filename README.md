@@ -4,9 +4,9 @@ Apify actor to scrape medium.com archive for given tag e.g. "react". Retrieves b
 
 ## !IMPORTANT!
 
-This scrapper does not retrieve detailed information (e.g. tags, content) which is located on the article page itself. I will create an actor (medium-deep-scrapper) for scrapping information from particular medium article with a given url in the future.
+This scraper does not retrieve detailed information (e.g. tags, content) which is located on the article page itself. I will create an actor (medium-deep-scraper) for scraping information from particular medium article with a given url in the future.
 
-The reason for this is to separate usecases that only requires basic article information (e.g. number of articles author wrote on given topic) from those, that require deep dive in the article (e.g. all tags of an article). This way the shallow scrapper can operate quickly by not visiting pages of every article.
+The reason for this is to separate usecases that only requires basic article information (e.g. number of articles author wrote on given topic) from those, that require deep dive in the article (e.g. all tags of an article). This way the shallow scraper can operate quickly by not visiting pages of every article.
 
 ## Input
 
