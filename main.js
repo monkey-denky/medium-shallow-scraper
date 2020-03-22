@@ -4,7 +4,12 @@ const { parseUrl } = require('./src/parser.js');
 const { scrapePage, archiveExists } = require('./src/crawler.js');
 
 Apify.main(async () => {
-  const stats = { totalArticleCount: 0 };
+  const stats = {
+    totalArticleCount: 0,
+    totalPageCount: 0,
+    totalUnfixedErrors: 0,
+    errors: [],
+  };
   const input = await Apify.getInput();
   console.log('Input:');
   console.dir(input);
@@ -27,13 +32,13 @@ Apify.main(async () => {
 
     handlePageTimeoutSecs: 60,
 
-    handleFailedRequestFunction: async ({ request }) => {
-      console.dir(request);
-      await requestQueue.addRequest({ url: request.url });
+    handleFailedRequestFunction: async ({ request, error }) => {
+      stats.errors.push(request);
+      stats.totalUnfixedErrors++;
     },
     handlePageFunction: async ({ request, response, $ }) => {
       const finalUrl = response.request.gotOptions.href;
-
+      stats.totalPageCount++;
       if (archiveExists(request.url, finalUrl)) {
         console.log(`${response.statusCode} ${request.url} `);
 
@@ -47,7 +52,7 @@ Apify.main(async () => {
           const data = scrapePage($);
           stats.totalArticleCount += data.length;
           await Apify.pushData({
-            url: finalHref,
+            url: finalUrl,
             total: data.length,
             data,
           });

@@ -4,18 +4,18 @@ const { parseClaps } = require('./parser');
 
 function archiveExists(originalUrl, finalUrl) {
   const originalDate = originalUrl.slice(
-    request.url.lastIndexOf('/archive') + 8,
-    request.url.lenght,
+    originalUrl.lastIndexOf('/archive') + 8,
+    originalUrl.lenght,
   );
   const finalDate = finalUrl.slice(
-    finalHref.lastIndexOf('/archive') + 8,
-    finalHref.lenght,
+    finalUrl.lastIndexOf('/archive') + 8,
+    finalUrl.lenght,
   );
   return originalDate === finalDate;
 }
 
 function scrapePage($) {
-  $('.streamItem')
+  return $('.streamItem')
     .get()
     .map(listItem => {
       const link = $(listItem).find(`a[data-action="open-post"]`);
@@ -45,6 +45,5 @@ function scrapePage($) {
     });
 }
 
-exports.crawl = Crawler;
 exports.archiveExists = archiveExists;
 exports.scrapePage = scrapePage;
