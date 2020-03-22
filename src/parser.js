@@ -30,13 +30,13 @@ function parseDate(year, month, day) {
     format = 'YYYY/MM';
   }
   if (day) {
-    // const input = date;
-    // input.date(day);
-    // if (isNaN(day) || input.isAfter(date) || day < 1) {
-    //   throw new Error(
-    //     'Invalid input, day must be a number in interval of <1,today>',
-    //   );
-    // }
+    if (day > date.daysInMonth()) {
+      throw new Error(
+        `[INVALID INPUT] Given input: ${day}. ${date.format(
+          'MMMM YYYY',
+        )} has only ${date.daysInMonth()} days.`,
+      );
+    }
     date.date(day);
     format = 'YYYY/MM/DD';
   }

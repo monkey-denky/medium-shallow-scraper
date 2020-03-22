@@ -23,7 +23,7 @@ Apify.main(async () => {
   console.dir(input);
   if (!input || !input.keyphrase) {
     throw new Error(
-      'Invalid input, must be a JSON object with the "keyphrase" field!',
+      '[INVALID INPUT] Input must be a JSON object with the "keyphrase" field!',
     );
   }
 
