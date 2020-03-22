@@ -88,7 +88,9 @@ Apify.main(async () => {
   const end = moment();
   stats.errors = Object.values(errors).length;
   stats.seconds = end.diff(start, 'seconds');
-  console.log(stats);
+
   await Apify.setValue('STATS', stats);
   await Apify.setValue('ERRORS', errors);
+  console.log('[DONE]');
+  console.log(stats);
 });
