@@ -4,14 +4,16 @@
   "schemaVersion": 1,
   "properties": {
     "keyphrase": {
+      "sectionCaption": "Keyphrase (required)",
+      "sectionDescription": "If medium.com/tag/{keyphrase}/archive have articles the actor will retrieve their information",
       "title": "Keyphrase",
       "type": "string",
-      "description": "Valid medium.com tag",
+      "description": "medium.com tag e.g. Javascript",
       "editor": "textfield",
       "example": "react js"
     },
     "year": {
-      "sectionCaption": "Date",
+      "sectionCaption": "Date (optional)",
       "sectionDescription": "If neither one of date fields (year, month , day) is specified, actor will scrape all articles for given tag. If only some field are specified, the rest will default to current date value",
       "title": "Year",
       "type": "integer",
